@@ -10,10 +10,10 @@ PN532_I2C pn532_i2c(Wire);
 NfcAdapter nfc = NfcAdapter(pn532_i2c);
 
 // MP3 Player
-#define PLAYER_RX_PIN 12
-#define PLAYER_TX_PIN 11
+#define PLAYER_RX_PIN 9
+#define PLAYER_TX_PIN 10
 uint8_t volume = 15;
-uint8_t fileCount = 0;
+int fileCount = 0;
 uint8_t fileIndex = 0;
 SoftwareSerial playerSerial(PLAYER_RX_PIN, PLAYER_TX_PIN);
 DFRobotDFPlayerMini player; 
@@ -26,7 +26,7 @@ void setup(void) {
   Serial.println("Initialization");
   initialize();
   Serial.println("Initialized");
-  
+
   nfc.begin();
 }
 
@@ -40,24 +40,28 @@ void setupPlayer() {
 }
 
 void initialize() {
-  while(fileCount < 2) {
-    fileCount = player.readFileCounts();
+  while (fileCount < 2) {
+    if (player.available()) {
+      fileCount = player.readFileCounts(DFPLAYER_DEVICE_SD);
+    }
   }
+  Serial.print("File count: ");
+  Serial.println(fileCount);
 }
 
 String command = "";
 void loop() {
   command = readCommandFromNFC();
-  if (command == "") {
-    return;
-  }
+  if (command != "") {
+    Serial.print("Command: ");
+    Serial.println(command);
   
-  Serial.print("Command: ");
-  Serial.println(command);
-
-  fileIndex = command.toInt();
-  Serial.print("File index: ");
-  Serial.println(fileIndex);
+    fileIndex = command.toInt();
+    Serial.print("File index: ");
+    Serial.println(fileIndex);
+  
+    player.playMp3Folder(fileIndex);
+  }
 
   delay(500);
 }
