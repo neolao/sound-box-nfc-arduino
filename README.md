@@ -1,1 +1,3 @@
-# sound-box-nfc-arduino
+# Sound box NFC
+
+![](sketch.png)
