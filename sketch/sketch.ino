@@ -5,13 +5,16 @@
 #include <SoftwareSerial.h>
 #include <DFRobotDFPlayerMini.h>
 
+// LED
+#define LED_PIN 9
+
 // NFC reader with I2C
 PN532_I2C pn532_i2c(Wire);
 NfcAdapter nfc = NfcAdapter(pn532_i2c);
 
 // MP3 Player
-#define PLAYER_RX_PIN 9
-#define PLAYER_TX_PIN 10
+#define PLAYER_RX_PIN 6
+#define PLAYER_TX_PIN 7
 uint8_t volume = 15;
 int fileCount = 0;
 uint8_t fileIndex = 0;
