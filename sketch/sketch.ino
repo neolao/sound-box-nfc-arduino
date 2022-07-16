@@ -44,7 +44,7 @@ void setupPlayer() {
   player.setTimeOut(500);
   player.reset();
   player.disableDAC();
-  player.volume(volume); 
+  player.volume(volume);
 }
 
 void initialize() {
@@ -69,6 +69,7 @@ void loop() {
     Serial.println(fileIndex);
 
     blinkLed();
+    player.volume(volume);
     player.playMp3Folder(fileIndex);
   }
 
