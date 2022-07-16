@@ -22,6 +22,7 @@ SoftwareSerial playerSerial(PLAYER_RX_PIN, PLAYER_TX_PIN);
 DFRobotDFPlayerMini player; 
 
 void setup(void) {
+  setupLed();
   setupPlayer();
 
   Serial.begin(115200);
@@ -31,6 +32,10 @@ void setup(void) {
   Serial.println("Initialized");
 
   nfc.begin();
+}
+
+void setupLed() {
+  pinMode(LED_PIN, OUTPUT);
 }
 
 void setupPlayer() {
@@ -62,11 +67,18 @@ void loop() {
     fileIndex = command.toInt();
     Serial.print("File index: ");
     Serial.println(fileIndex);
-  
+
+    blinkLed();
     player.playMp3Folder(fileIndex);
   }
 
   delay(500);
+}
+
+void blinkLed() {
+  digitalWrite(LED_PIN, HIGH);
+  delay(500);
+  digitalWrite(LED_PIN, LOW); 
 }
 
 String readCommandFromNFC() {
