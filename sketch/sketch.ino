@@ -11,13 +11,18 @@
 // NFC reader with I2C
 PN532_I2C pn532_i2c(Wire);
 NfcAdapter nfc = NfcAdapter(pn532_i2c);
+struct Command {
+    String action;
+    String value;
+};
 
 // MP3 Player
 #define PLAYER_RX_PIN 6
 #define PLAYER_TX_PIN 7
-uint8_t volume = 15;
+uint8_t volume = 17;
 int fileCount = 0;
 uint8_t fileIndex = 0;
+bool isPlaying = false;
 SoftwareSerial playerSerial(PLAYER_RX_PIN, PLAYER_TX_PIN);
 DFRobotDFPlayerMini player; 
 
@@ -57,20 +62,12 @@ void initialize() {
   Serial.println(fileCount);
 }
 
-String command = "";
 void loop() {
-  command = readCommandFromNFC();
-  if (command != "") {
-    Serial.print("Command: ");
-    Serial.println(command);
-  
-    fileIndex = command.toInt();
-    Serial.print("File index: ");
-    Serial.println(fileIndex);
+  Command command = readCommandFromNFC();
+  processCommand(command);
 
-    blinkLed();
-    player.volume(volume);
-    player.playMp3Folder(fileIndex);
+  if (player.available() && player.readType() == DFPlayerPlayFinished) {
+    isPlaying = false;
   }
 
   delay(500);
@@ -82,22 +79,25 @@ void blinkLed() {
   digitalWrite(LED_PIN, LOW); 
 }
 
-String readCommandFromNFC() {
+Command readCommandFromNFC() {
+  struct Command command;
+  
   if (!nfc.tagPresent()) {
-    return "";
+    return { "unknown", "unknown" };
   }
   
   NfcTag tag = nfc.read();
 
   if (!tag.hasNdefMessage()) {
-    return "";
+    return { "unknown", "unknown" };
   }
 
   
-  NdefMessage message = tag.getNdefMessage();
-  int recordCount = message.getRecordCount();
-  for (int i = 0; i < recordCount; i++) {
-    NdefRecord record = message.getRecord(i);
+  NdefMessage ndefMessage = tag.getNdefMessage();
+  int recordCount = ndefMessage.getRecordCount();
+  String messages[2];
+  for (int messageIndex = 0; messageIndex < recordCount && messageIndex < 2; messageIndex++) {
+    NdefRecord record = ndefMessage.getRecord(messageIndex);
 
     /*
     Serial.print("  TNF: ");
@@ -122,6 +122,51 @@ String readCommandFromNFC() {
     }
     //Serial.print("  Payload (as String): ");
     //Serial.println(payloadAsString);
-    return payloadAsString;
+    messages[messageIndex] = payloadAsString;
   }
+
+  
+  if (messages[0] && messages[1]) {
+    return { messages[0], messages[1] };
+  }
+  
+  return { "unknown", "unknown" };
+}
+
+void processCommand(Command command) {
+  if (command.action == "unknown") {
+    return;
+  }
+  Serial.print("Command: ");
+  Serial.print(command.action);
+  Serial.print(" > ");
+  Serial.println(command.value);
+
+  if (command.action == "play") {
+    play(command.value.toInt());
+  } else if (command.action == "volume") {
+    setVolume(command.value.toInt());
+  }
+}
+
+void play(uint8_t index) {
+  Serial.print("Play index: ");
+  Serial.println(index);
+
+  if (!isPlaying || index != fileIndex) {
+    blinkLed();
+    player.volume(volume);
+    player.playMp3Folder(index);
+    fileIndex = index;
+    isPlaying = true;
+    delay(1000);  
+  }
+}
+
+void setVolume(uint8_t newVolume) {
+  Serial.print("New volume: ");
+  Serial.println(newVolume);
+
+  player.volume(newVolume);
+  volume = newVolume;
 }
