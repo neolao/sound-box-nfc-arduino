@@ -152,14 +152,17 @@ void processCommand(Command command) {
 void play(uint8_t index) {
   Serial.print("Play index: ");
   Serial.println(index);
+  Serial.println("is playing? ");
+  Serial.println(isPlaying);
+  Serial.println("Current index: ");
+  Serial.println(fileIndex);
 
   if (!isPlaying || index != fileIndex) {
     blinkLed();
-    player.volume(volume);
     player.playMp3Folder(index);
     fileIndex = index;
     isPlaying = true;
-    delay(1000);  
+    delay(500);  
   }
 }
 
@@ -167,6 +170,7 @@ void setVolume(uint8_t newVolume) {
   Serial.print("New volume: ");
   Serial.println(newVolume);
 
+  blinkLed();
   player.volume(newVolume);
   volume = newVolume;
 }
